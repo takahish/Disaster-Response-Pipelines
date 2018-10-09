@@ -9,6 +9,7 @@ from flask import Flask
 from flask import render_template, request, jsonify
 from plotly.graph_objs import Bar
 from sklearn.externals import joblib
+from sklearn.feature_extraction.text import CountVectorizer
 from sqlalchemy import create_engine
 
 
@@ -29,9 +30,14 @@ def tokenize(text):
 engine = create_engine('sqlite:///../data/DisasterResponse.db')
 df = pd.read_sql_table('CleanedDataTable', engine)
 
+# load vocabulary stats
+vocabulary_counts, vocabulary_words = joblib.load("../models/vocabulary_stats.pkl")
+
+# load category stats
+category_counts, category_names = joblib.load("../models/category_stats.pkl")
+
 # load model
 model = joblib.load("../models/classifier.pkl")
-
 
 # index webpage displays cool visuals and receives user input text for model
 @app.route('/')
@@ -40,8 +46,8 @@ def index():
     
     # extract data needed for visuals
     # TODO: Below is an example - modify to extract data for your own visuals
-    genre_counts = df.groupby('genre').count()['message']
-    genre_names = list(genre_counts.index)
+    #genre_counts = df.groupby('genre').count()['message']
+    #genre_names = list(genre_counts.index)
     
     # create visuals
     # TODO: Below is an example - modify to create your own visuals
@@ -49,18 +55,35 @@ def index():
         {
             'data': [
                 Bar(
-                    x=genre_names,
-                    y=genre_counts
+                    x=list(vocabulary_words),
+                    y=list(vocabulary_counts)
                 )
             ],
 
             'layout': {
-                'title': 'Distribution of Message Genres',
+                'title': 'The 30 words that are random sampled from vocabulary',
                 'yaxis': {
-                    'title': "Count"
+                    'title': "Counts"
                 },
                 'xaxis': {
-                    'title': "Genre"
+                    'title': "Words"
+                }
+            }
+        },
+        {
+            'data': [
+                Bar(
+                    x=list(category_names),
+                    y=list(category_counts)
+                )
+            ],
+            'layout': {
+                'title': 'The 36 categories that must be classified',
+                'yaxis': {
+                    'title': "A number of messages"
+                },
+                'xaxis': {
+                    'title': "Categories"
                 }
             }
         }
